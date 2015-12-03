@@ -11,7 +11,7 @@ a pirate will cause you to lose all of your gold.
 What's Included
 ---------------
 
-Tournament
+Treasure Hunt
 * game_board.py
 * menus.py
 * treasure_hunt.py
@@ -73,4 +73,4 @@ Treasure Hunt written by Jordan Alexander Watt (JAW)
 
 ***
 
-*Last edited December 1 2015*
+*Last edited December 3 2015*
