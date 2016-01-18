@@ -9,8 +9,25 @@
 # Licence:     <your licence>
 #-------------------------------------------------------------------------------
 
-def main():
-    pass
+import game_board
+import menus
+from tkinter import *
+
+def testing():
+    print("testing")
 
 if __name__ == '__main__':
-    main()
+    Game = GameBoard()
+
+    #Create the window object using tkinter
+    App = Tk()
+
+    #Modify app window
+    App.title("Treasure Hunt")
+    App.geometry("575x425")
+
+    #connects window class to app, adds all objects on gui to root window
+    Application = Window(App)
+
+    #Kick off the event loop
+    App.mainloop()
