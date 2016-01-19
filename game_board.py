@@ -4,9 +4,10 @@
 #
 # Author:      Jordan Alexander Watt
 #
-# Created:     01-12-2015
-# Copyright:   (c) Jordan 2015
-# Licence:     <your licence>
+# Release:    19-1-2016
+# Version:     1.0
+#
+# Copyright:   (c) Jordan Watt 2015
 # ------------------------------------------------------------------------------
 
 from random import randint
