@@ -26,6 +26,9 @@ class TreasureHunt(tk.Tk):
         self.frames = {}
         self.Game = GameBoard()
         self.reveal = tk.IntVar()
+        self.unlock = False
+        self.score = {"CURRENT": {"RESULT": "", "GOLD": 0, "MOVES": 0},
+                      "BEST": {"RESULT": "", "GOLD": 0, "MOVES": 0}}
 
         for i in (MainMenu, GameMenu, EndMenu):
             frame = i(container, self)
@@ -37,7 +40,9 @@ class TreasureHunt(tk.Tk):
     def show_frame(self, menu):
 
         frame = self.frames[menu]
-        frame.refresh()
+        if frame == self.frames[GameMenu]:
+            frame.refresh()
+        frame.widgets()
         frame.tkraise()
 
 #Creates GUI
@@ -47,10 +52,9 @@ class MainMenu(tk.Frame):
         self.reveal = tk.IntVar()
         self.treasure_h = treasure_h
         self.grid()
-        self.main_menu()
 
     #All immediately visable objects on interface
-    def main_menu(self): # lambda: (character.toggle_gender(), self.refresh())
+    def widgets(self): # lambda: (character.toggle_gender(), self.refresh())
 
         #Button sends arguments to game_board and starts a new game
         self.play_game = tk.Button(self)
@@ -74,7 +78,6 @@ class MainMenu(tk.Frame):
         self.grid_entry["width"] = 4
         self.grid_entry.grid(row = 1, column = 3)
         self.grid_entry.insert(0, '8')
-##        self.grid_entry["state"] = tk.DISABLED
 
         #Label & Entry for chest quantity
         self.chest_label = tk.Label(self)
@@ -85,7 +88,6 @@ class MainMenu(tk.Frame):
         self.chest_entry["width"] = 4
         self.chest_entry.grid(row = 2, column = 3)
         self.chest_entry.insert(0, '10')
-##        self.chest_entry["state"] = tk.DISABLED
 
         #Label & Entry for pirate quantity
         self.pirate_label = tk.Label(self)
@@ -96,39 +98,40 @@ class MainMenu(tk.Frame):
         self.pirate_entry["width"] = 4
         self.pirate_entry.grid(row = 3, column = 3)
         self.pirate_entry.insert(0, '5')
-##        self.pirate_entry["state"] = tk.DISABLED
 
         #The following code reveals all chests/pirates on
         #the board when checked. Uncomment to enable for debugging
-        self.reveal_check = tk.Checkbutton(self)
-        self.reveal_check["text"] = "Reveal Board"
-        self.reveal_check["variable"] = self.treasure_h.reveal
-        self.reveal_check.grid(row = 4, column = 1)
+##        self.reveal_check = tk.Checkbutton(self)
+##        self.reveal_check["text"] = "Reveal Board"
+##        self.reveal_check["variable"] = self.treasure_h.reveal
+##        self.reveal_check.grid(row = 4, column = 1)
+
+        if self.treasure_h.unlock:
+            self.grid_entry["state"] = tk.NORMAL
+            self.chest_entry["state"] = tk.NORMAL
+            self.pirate_entry["state"] = tk.NORMAL
+        else:
+            self.grid_entry["state"] = tk.DISABLED
+            self.chest_entry["state"] = tk.DISABLED
+            self.pirate_entry["state"] = tk.DISABLED
 
     def play(self):
         grid_size = int(self.grid_entry.get())
         chest_no = int(self.chest_entry.get())
         pirate_no = int(self.pirate_entry.get())
-        print(grid_size)
-        print(chest_no)
-        print(pirate_no)
         self.treasure_h.Game = GameBoard(grid_size, pirate_no, chest_no)
         self.treasure_h.show_frame(GameMenu)
 
-    def unlock(self):
-        self.grid_entry["state"] = tk.NORMAL
-        self.chest_entry["state"] = tk.NORMAL
-        self.pirate_entry["state"] = tk.NORMAL
-
-    def refresh(self):
-        pass
 
 class GameMenu(tk.Frame):
     def __init__(self, master, treasure_h):
         tk.Frame.__init__(self, master)
-
+        self.grid()
         self.treasure_h = treasure_h
+        self.widgets()
 
+    #All immediately visable objects on interface
+    def widgets(self):
         top = self.winfo_toplevel()
         top.rowconfigure(0, weight = 1)
         top.columnconfigure(0, weight = 1)
@@ -137,14 +140,9 @@ class GameMenu(tk.Frame):
         self.rowconfigure(1, weight = 1)
         self.rowconfigure(2)
         self.columnconfigure(0, weight = 1)
-        self.columnconfigure(1, weight = 1)
+        self.columnconfigure(1, pad = 15)
         self.columnconfigure(2, weight = 1)
         self.columnconfigure(3, weight = 1)
-
-        #Label & Entry for pirate quantity
-        self.result_label = tk.Label(self)
-        self.result_label["text"] = ""
-        self.result_label.grid(row = 0, column = 0)
 
         self.canvas = tk.Canvas(self, borderwidth=2, highlightthickness=0,
                                 width=75, height=75, background="bisque")
@@ -154,38 +152,44 @@ class GameMenu(tk.Frame):
         #Button sends arguments to game_board and starts a new game
         self.menu_button = tk.Button(self)
         self.menu_button["text"] = "Main Menu"
-        self.menu_button["command"] = lambda: treasure_h.show_frame(MainMenu)
-        self.menu_button.grid(row = 0, column = 2)
+        self.menu_button["command"] = lambda: self.treasure_h.show_frame(MainMenu)
+        self.menu_button.grid(row = 0, column = 0, sticky = tk.W)
 
         #Button exits the program
         self.quit_game = tk.Button(self)
         self.quit_game["text"] = "Quit"
         self.quit_game["command"] = quit_app
-        self.quit_game.grid(row = 0, column = 3)
+        self.quit_game.grid(row = 0, column = 3, sticky = tk.E)
 
         self.move_x_label = tk.Label(self)
         self.move_x_label["text"] = "Left/Right:"
-        self.move_x_label.grid(row = 2, column = 0)
+        self.move_x_label.grid(row = 2, column = 0, sticky = tk.E)
 
         self.move_x_entry = tk.Spinbox(self)
         self.move_x_entry["width"] = 4
         self.move_x_entry["from_"] = -(self.treasure_h.Game.grid)
         self.move_x_entry["to"] = self.treasure_h.Game.grid
-        self.move_x_entry.grid(row = 2, column = 1)
+        self.move_x_entry.grid(row = 2, column = 1, sticky = tk.W)
 
         self.move_y_label = tk.Label(self)
         self.move_y_label["text"] = "Up/Down:"
-        self.move_y_label.grid(row = 3, column = 0)
+        self.move_y_label.grid(row = 3, column = 0, sticky = tk.E)
 
-        self.move_y_entry = tk.Entry(self)
+        self.move_y_entry = tk.Spinbox(self)
         self.move_y_entry["width"] = 4
-        self.move_y_entry.grid(row = 3, column = 1)
-        self.move_y_entry.insert(0, '0')
+        self.move_y_entry["from_"] = -(self.treasure_h.Game.grid)
+        self.move_y_entry["to"] = self.treasure_h.Game.grid
+        self.move_y_entry.grid(row = 3, column = 1, sticky = tk.W)
+
+        #Label & Entry for pirate quantity
+        self.result_label = tk.Label(self)
+        self.result_label["text"] = ""
+        self.result_label.grid(row = 2, column = 2, sticky = tk.E)
 
         self.move_button = tk.Button(self)
         self.move_button["text"] = "GO!"
         self.move_button["command"] = self.move
-        self.move_button.grid(row = 2, column = 2)
+        self.move_button.grid(row = 3, column = 2, sticky = tk.W)
 
         self.gold_label = tk.Label(self)
         self.gold_label["text"] = "Gold: 0"
@@ -199,17 +203,26 @@ class GameMenu(tk.Frame):
         x = int(self.move_x_entry.get())
         y = int(self.move_y_entry.get())
         result = self.treasure_h.Game.move_player(x, y)
-        print (result)
+        player = str(self.treasure_h.Game.player_location)
+        self.result_label["text"] = player + " " + result
         self.refresh()
+        if (result == "WINNER" or result == "LOSER"):
+            self.result_label["text"] = ""
+            gold = self.treasure_h.Game.player_gold
+            moves = self.treasure_h.Game.player_moves
+            self.treasure_h.score["CURRENT"]["RESULT"] = result
+            self.treasure_h.score["CURRENT"]["GOLD"] = gold
+            self.treasure_h.score["CURRENT"]["MOVES"] = moves
+            if (result == "WINNER" and gold >= self.treasure_h.score["BEST"]["GOLD"]):
+                self.treasure_h.score["BEST"]["RESULT"] = result
+                self.treasure_h.score["BEST"]["GOLD"] = gold
+                self.treasure_h.score["BEST"]["MOVES"] = moves
+            self.treasure_h.show_frame(EndMenu)
 
     def redraw(self, event):
         self.refresh()
 
     def refresh(self):
-        self.gold_label["text"] = "Gold: " + str(self.treasure_h.Game.player_gold)
-        self.moves_label["text"] = "Moves: " + str(self.treasure_h.Game.player_moves)
-        self.move_x_entry["from_"] = -(self.treasure_h.Game.grid)
-        self.move_x_entry["to"] = self.treasure_h.Game.grid
         self.canvas.delete("square")
         grid_wpx = self.canvas.winfo_width()
         grid_hpx = self.canvas.winfo_height()
@@ -232,18 +245,51 @@ class GameMenu(tk.Frame):
                 elif (col+1, row+1) in chests and self.treasure_h.reveal.get():
                     color = "yellow"
                 else:
-                    color = "blue"
+                    color = "#a98d70"
                 self.canvas.create_rectangle(x1, y1, x2, y2, fill = color, outline="black", tags="square")
+
+        self.gold_label["text"] = "Gold: " + str(self.treasure_h.Game.player_gold)
+        self.moves_label["text"] = "Moves: " + str(self.treasure_h.Game.player_moves)
+        self.move_x_entry["from_"] = -(player[0] - 1)
+        self.move_x_entry["to"] = grid_s - player[0]
+        self.move_y_entry["from_"] = -(player[1] - 1)
+        self.move_y_entry["to"] = grid_s - player[1]
 
 class EndMenu(tk.Frame):
     def __init__(self, master, treasure_h):
         tk.Frame.__init__(self, master)
+        self.grid()
+        self.treasure_h = treasure_h
 
-    def refresh(self):
-        pass
+    #All immediately visable objects on interface
+    def widgets(self):
+        self.treasure_h.unlock = True
+        current = ("CURRENT:\n\n" + self.treasure_h.score["CURRENT"]["RESULT"] +
+                 "\ngold: " + str(self.treasure_h.score["CURRENT"]["GOLD"]) +
+                 "\nmoves: " + str(self.treasure_h.score["CURRENT"]["MOVES"]))
+        best = ("BEST:\n" +
+                 "\ngold: " + str(self.treasure_h.score["BEST"]["GOLD"]) +
+                 "\nmoves: " + str(self.treasure_h.score["BEST"]["MOVES"]))
 
+        #Button sends arguments to game_board and starts a new game
+        self.menu_button = tk.Button(self)
+        self.menu_button["text"] = "Main Menu"
+        self.menu_button["command"] = lambda: self.treasure_h.show_frame(MainMenu)
+        self.menu_button.grid(row = 0, column = 0, sticky = tk.W)
 
-    # ----- refresh -----
+        #Button exits the program
+        self.quit_game = tk.Button(self)
+        self.quit_game["text"] = "Quit"
+        self.quit_game["command"] = quit_app
+        self.quit_game.grid(row = 0, column = 2, sticky = tk.E)
+
+        self.current_label = tk.Label(self)
+        self.current_label["text"] = current
+        self.current_label.grid(row = 1, column = 1, pady = 15)
+
+        self.best_label = tk.Label(self)
+        self.best_label["text"] = best
+        self.best_label.grid(row = 2, column = 1, pady = 15)
 
 def quit_app():
     App.destroy()
@@ -255,7 +301,10 @@ if __name__ == '__main__':
 
     #Modify app window
     App.title("Treasure Hunt")
-    App.geometry("575x425")
+    App.geometry("450x475")
+
+    App.bind_all("<Escape>", lambda event: quit_app())
+    App.bind_all("<F1>", lambda event: App.show_frame(MainMenu))
 
     #Kick off the event loop
     App.mainloop()
